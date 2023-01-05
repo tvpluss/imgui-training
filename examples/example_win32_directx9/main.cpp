@@ -7,6 +7,9 @@
 #include "imgui_impl_win32.h"
 #include <d3d9.h>
 #include <tchar.h>
+#include <math.h>
+#include "implot.h"
+#include <time.h>
 
 // Data
 static LPDIRECT3D9              g_pD3D = NULL;
@@ -18,8 +21,32 @@ bool CreateDeviceD3D(HWND hWnd);
 void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 // Main code
+float RandomRange(float min, float max) {
+    float scale = rand() / (float)RAND_MAX;
+    return min + scale * (max - min);
+}
+//void TextCentered(std::string text) {
+//    float win_width = ImGui::GetWindowSize().x;
+//    float text_width = ImGui::CalcTextSize(text.c_str()).x;
+//
+//    // calculate the indentation that centers the text on one line, relative
+//    // to window left, regardless of the `ImGuiStyleVar_WindowPadding` value
+//    float text_indentation = (win_width - text_width) * 0.5f;
+//
+//    // if text is too long to be drawn on one line, `text_indentation` can
+//    // become too small or even negative, so we check a minimum indentation
+//    float min_indentation = 20.0f;
+//    if (text_indentation <= min_indentation) {
+//        text_indentation = min_indentation;
+//    }
+//
+//    ImGui::SameLine(text_indentation);
+//    ImGui::PushTextWrapPos(win_width - text_indentation);
+//    ImGui::TextWrapped(text.c_str());
+//    ImGui::PopTextWrapPos();
+//}
+
 int main(int, char**)
 {
     // Create application window
@@ -43,12 +70,15 @@ int main(int, char**)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
+    ImGuiStyle* style = &ImGui::GetStyle();
+    style->Colors[ImGuiCol_Text] = ImVec4(0.3f, 0.3f, 0.0f, 0.7f);
     //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
@@ -63,19 +93,40 @@ int main(int, char**)
     // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
+    io.Fonts->AddFontDefault();
     //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
+    ImFont* font_h0 = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 30.0f);
+    ImFont* font_h1 = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 24.0f);
+
+    ImFont* font_h2 = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 20.0f);
+    ImFont* font_text = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 16.0f);
+    IM_ASSERT(font_h0 != NULL);
+    IM_ASSERT(font_h1 != NULL);
+    IM_ASSERT(font_h2 != NULL);
+    IM_ASSERT(font_text != NULL);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = false;
     bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    bool my_tool_active = false;
+    bool show_implot_demo_window = false;
+    bool my_form = true;
+    bool my_table = false;
+    ImVec4 clear_color = ImVec4(0.25f, 0.35f, 0.00f, 1.00f);
 
+    static double x[100];
+    static double y[100];
+    for (int j = 0; j <= 100; j++) {
+        x[j] = RandomRange(-1, 1);
+        if (j > 0)
+            y[j] = y[j - 1] + RandomRange(0, 1);
+        else
+            y[j] = 1;
+    }
     // Main loop
     bool done = false;
     while (!done)
@@ -101,6 +152,8 @@ int main(int, char**)
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
+        if (show_implot_demo_window)
+            ImPlot::ShowDemoWindow(&show_implot_demo_window);
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         {
@@ -111,8 +164,11 @@ int main(int, char**)
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Implot Demo", &show_implot_demo_window);
             ImGui::Checkbox("Another Window", &show_another_window);
-
+            ImGui::Checkbox("My first Window", &my_tool_active);
+            ImGui::Checkbox("Appeal Application Form", &my_form);
+            ImGui::Checkbox("Demo Table", &my_table);
             ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
@@ -120,16 +176,127 @@ int main(int, char**)
                 counter++;
             ImGui::SameLine();
             ImGui::Text("counter = %d", counter);
-
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             ImGui::End();
         }
+        static double now = (double)time(0);
+        if (my_table) {
+            ImGui::Begin("My Table", &my_table);
+            if (ImPlot::BeginSubplots("My Subplot", 1, 2, ImVec2(800, 400))) {
+                for (int i = 0; i < 2; ++i) {
+                    char id[5] = "##id";
+                    id[4] = (char)i;
+                    if (ImPlot::BeginPlot(id)) {
 
+                        ImPlot::PlotLine(id, x, y, 100);
+
+                        ImPlot::EndPlot();
+                    }
+                }
+                ImPlot::EndSubplots();
+            }
+            ImGui::End();
+        }
+        if (my_form) {
+            ImGui::Begin("Appeal Application Form", &my_form);
+
+            ImGui::PushFont(font_h0);
+            ImGui::Text("Appeal Application Form");
+            ImGui::PopFont();
+            ImGui::PushFont(font_h1);
+            ImGui::Text("Personal Information");
+
+            ImGui::PushFont(font_h2);
+            ImGui::Text("Name");
+
+            ImGui::PushFont(font_text);
+            if (ImGui::BeginTable("table1", 2))
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::PushItemWidth(-1);
+                static char buf1[64] = ""; ImGui::InputTextWithHint("##First", "First", buf1, 64);
+                ImGui::PopItemWidth();
+                ImGui::TableSetColumnIndex(1);
+                ImGui::PushItemWidth(-1);
+                static char buf2[64] = ""; ImGui::InputTextWithHint("##Last", "Last", buf2, 64);
+                ImGui::PopItemWidth();
+                ImGui::EndTable();
+            }
+
+
+            ImGui::PopFont();
+
+            ImGui::Text("Student Number");
+
+            ImGui::PushFont(font_text);
+            ImGui::PushItemWidth(-1);
+            static char buf3[64] = ""; ImGui::InputText("##Number", buf3, 64, ImGuiInputTextFlags_CharsDecimal);
+            ImGui::PopItemWidth();
+            ImGui::PopFont();
+
+            ImGui::PopFont();
+
+            ImGui::Text("Appeal Information");
+
+            ImGui::PushFont(font_h2);
+            ImGui::Text("Request Summary");
+
+            ImGui::PushFont(font_text);
+            static char text[1024 * 16] = "";
+            ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 4));
+            ImGui::PopFont();
+
+            ImGui::Text("Letter of Appeal Upload");
+
+            ImGui::PushFont(font_text);
+            ImGui::PushItemWidth(-1);
+            static char upload[64] = "Choose File or Upload"; ImGui::InputText("##Upload", upload, 64);
+            ImGui::PopItemWidth();
+            ImGui::PopFont();
+
+            ImGui::Text("Do you have supporting documents");
+            ImGui::PushFont(font_text);
+            static int item_current_2 = 0;
+            ImGui::PushItemWidth(-1);
+            ImGui::Combo("##combo", &item_current_2, "Yes\0No\0\0");
+            ImGui::PopItemWidth();
+            ImGui::PopFont();
+
+            ImGui::PopFont();
+
+            ImGui::PopFont();
+            ImGui::End();
+
+
+        }
+        if (my_tool_active)
+        {
+            ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
+
+            // Edit a color stored as 4 floats
+            float my_color[4];
+            ImGui::ColorEdit4("Color", my_color);
+
+            // Generate samples and plot them
+            float samples[100];
+            for (int n = 0; n < 100; n++)
+                samples[n] = sinf(n * 0.2f + ImGui::GetTime() * 1.5f);
+            ImGui::PlotLines("Samples", samples, 100);
+
+            // Display contents in a scrolling region
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Important Stuff");
+            ImGui::BeginChild("Scrolling");
+            for (int n = 0; n < 50; n++)
+                ImGui::Text("%04d: Some text", n);
+            ImGui::EndChild();
+            ImGui::End();
+        }
         // 3. Show another simple window.
         if (show_another_window)
         {
             ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
+            ImGui::Text("Hello from another window!, this text has been changed");
             if (ImGui::Button("Close Me"))
                 show_another_window = false;
             ImGui::End();
@@ -140,7 +307,7 @@ int main(int, char**)
         g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
         g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
         g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-        D3DCOLOR clear_col_dx = D3DCOLOR_RGBA((int)(clear_color.x*clear_color.w*255.0f), (int)(clear_color.y*clear_color.w*255.0f), (int)(clear_color.z*clear_color.w*255.0f), (int)(clear_color.w*255.0f));
+        D3DCOLOR clear_col_dx = D3DCOLOR_RGBA((int)(clear_color.x * clear_color.w * 255.0f), (int)(clear_color.y * clear_color.w * 255.0f), (int)(clear_color.z * clear_color.w * 255.0f), (int)(clear_color.w * 255.0f));
         g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
         if (g_pd3dDevice->BeginScene() >= 0)
         {
@@ -157,6 +324,7 @@ int main(int, char**)
 
     ImGui_ImplDX9_Shutdown();
     ImGui_ImplWin32_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     CleanupDeviceD3D();
