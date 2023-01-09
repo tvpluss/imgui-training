@@ -8,9 +8,11 @@
 #include <d3d9.h>
 #include <tchar.h>
 #include <math.h>
-#include "implot.h"
+//#include "implot.h"
 #include <time.h>
-
+#pragma once
+#include <implot.h>
+#include "implot_vertical.h"
 // Data
 static LPDIRECT3D9              g_pD3D = NULL;
 static LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
@@ -26,6 +28,19 @@ float RandomRange(float min, float max) {
     float scale = rand() / (float)RAND_MAX;
     return min + scale * (max - min);
 }
+void DrawBasicTable(char* label, char* contents[], int row, int col) {
+    if (ImGui::BeginTable(label, col)) {
+
+    for (int i = 0; i < row; i++) {
+        ImGui::TableNextRow();
+        for (int j = 0; j < col; j++) {
+            ImGui::TableSetColumnIndex(j);
+            ImGui::Text(contents[i * col + j]);
+        }
+    }
+    ImGui::EndTable();
+    }
+};
 //void TextCentered(std::string text) {
 //    float win_width = ImGui::GetWindowSize().x;
 //    float text_width = ImGui::CalcTextSize(text.c_str()).x;
@@ -114,13 +129,14 @@ int main(int, char**)
     bool show_another_window = false;
     bool my_tool_active = false;
     bool show_implot_demo_window = false;
-    bool my_form = true;
-    bool my_table = false;
+    bool my_form = false;
+    bool my_table = true;
+    const int rand_data_count = 100;
     ImVec4 clear_color = ImVec4(0.25f, 0.35f, 0.00f, 1.00f);
 
-    static double x[100];
-    static double y[100];
-    for (int j = 0; j <= 100; j++) {
+    static double x[rand_data_count];
+    static double y[rand_data_count];
+    for (int j = 0; j <= rand_data_count; j++) {
         x[j] = RandomRange(-1, 1);
         if (j > 0)
             y[j] = y[j - 1] + RandomRange(0, 1);
@@ -182,19 +198,95 @@ int main(int, char**)
         static double now = (double)time(0);
         if (my_table) {
             ImGui::Begin("My Table", &my_table);
-            if (ImPlot::BeginSubplots("My Subplot", 1, 2, ImVec2(800, 400))) {
-                for (int i = 0; i < 2; ++i) {
-                    char id[5] = "##id";
-                    id[4] = (char)i;
-                    if (ImPlot::BeginPlot(id)) {
+            static ImGuiTableFlags flags_petropy = ImGuiTableFlags_Resizable;
+            if (ImGui::BeginTable("petropy", 8, flags_petropy)) {
 
-                        ImPlot::PlotLine(id, x, y, 100);
-
-                        ImPlot::EndPlot();
+                // Header Row
+                //ImGui::TableSetupScrollFreeze(0, 1);
+                ImGui::TableSetupColumn("GAMMA RAY", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("DEPTH", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("RESISTIVITY", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("NEUTRON DENSITY", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("MINERALOGOY", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("POROSITY SATURATION", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("OIL IN PLACE ", ImGuiTableColumnFlags_None);
+                ImGui::TableSetupColumn("ELECTROFACIES", ImGuiTableColumnFlags_None);
+                ImGui::TableHeadersRow();
+                // Legend Row
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                // Sub-table GAMMA RAY
+                if (ImGui::BeginTable("gamma ray", 3)) {
+                    char* contents[6] = { "0", "GR", "150", "0", "CAL", "16" };
+                    for (int row = 0; row < 2; row++) {
+                        ImGui::TableNextRow();
+                        for (int col = 0; col < 3; col++) {
+                            ImGui::TableSetColumnIndex(col);
+                            ImGui::Text(contents[row * 3 + col]);
+                        }
                     }
+                    ImGui::EndTable();
                 }
-                ImPlot::EndSubplots();
+                char* depth_contents[2] = { "2", "2" };
+                ImGui::TableSetColumnIndex(1);
+                DrawBasicTable("depth", depth_contents, 2, 1);
+
+                char* resist_contents[4] = { "RESDEEP", "2000", "RESMED", "2000" };
+                ImGui::TableSetColumnIndex(2);
+                DrawBasicTable("resist", resist_contents, 2, 2);
+
+                char* neutron_contents[9] = { "0.45", "NPHI", "-0.15", "1.95", "RHOB", "2.95", "0", "PE", "10" };
+                ImGui::TableSetColumnIndex(3);
+                DrawBasicTable("neutron", neutron_contents, 3, 3);
+
+                char* mineral_contents[9] = { "VCLAY", "VQTZ", "VDOL", "VCLC", "VPYR", "VOM", "BVH", "BVWF", "BVWI" };
+                ImGui::TableSetColumnIndex(4);
+                DrawBasicTable("mineral", mineral_contents, 1, 9);
+
+                char* porosity_contents[3] = { "1", "Sw", "0" };
+                ImGui::TableSetColumnIndex(5);
+                DrawBasicTable("porosity", porosity_contents, 1, 3);
+
+                char* oil_contents[6] = { "0", "OIP", "0.25", "50", "SUM OIP", "0" };
+                ImGui::TableSetColumnIndex(6);
+                DrawBasicTable("oil", oil_contents, 2, 1);
+
+                char* electro_contents[2] = { "0", "1" };
+                ImGui::TableSetColumnIndex(7);
+                DrawBasicTable("electro", electro_contents, 2, 1);
+
+
+                //Graph Row
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                if (ImPlot::BeginPlot("##Test")) {
+                    ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+                    ImPlot::SetupAxes("X", "Y", ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
+                    ImPlot::PlotShaded("##Test", x, y, rand_data_count, 0.2, ImPlotShadedFlags_Vertical);
+                    ImPlot::PlotLine("##Test", x, y, rand_data_count);
+                    ImPlot::PopStyleVar();
+                    ImPlot::EndPlot();
+                }
+                ImGui::TableSetColumnIndex(1);
+                if (ImPlot::BeginPlot("Testvertical")) {
+                    ImPlotVertical::PlotLineV("##Testvertical", x, y, rand_data_count);
+                    ImPlot::EndPlot();
+                }
+                ImGui::EndTable();
             }
+            //if (ImPlot::BeginSubplots("My Subplot", 1, 2, ImVec2(800, 400))) {
+            //    for (int i = 0; i < 2; ++i) {
+            //        char id[5] = "##id";
+            //        id[4] = (char)i;
+            //        if (ImPlot::BeginPlot(id)) {
+            //            
+            //            ImPlot::PlotLine(id, x, y, rand_data_count);
+
+            //            ImPlot::EndPlot();
+            //        }
+            //    }
+            //    ImPlot::EndSubplots();
+            //}
             ImGui::End();
         }
         if (my_form) {
@@ -202,16 +294,14 @@ int main(int, char**)
 
             ImGui::PushFont(font_h0);
             ImGui::Text("Appeal Application Form");
-            ImGui::PopFont();
-            ImGui::PushFont(font_h1);
+            ImGui::PopFont(); ImGui::PushFont(font_h1);
             ImGui::Text("Personal Information");
 
             ImGui::PushFont(font_h2);
             ImGui::Text("Name");
 
             ImGui::PushFont(font_text);
-            if (ImGui::BeginTable("table1", 2))
-            {
+            if (ImGui::BeginTable("table1", 2)) {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::PushItemWidth(-1);

@@ -1767,6 +1767,17 @@ void PlotShaded(const char* label_id, const T* values, int count, double y_ref, 
 
 template <typename T>
 void PlotShaded(const char* label_id, const T* xs, const T* ys, int count, double y_ref, ImPlotShadedFlags flags, int offset, int stride) {
+    if (ImHasFlag(flags, ImPlotShadedFlags_Vertical)) {
+
+    if (y_ref == -HUGE_VAL)
+        y_ref = GetPlotLimits(IMPLOT_AUTO,IMPLOT_AUTO).X.Min;
+    if (y_ref == HUGE_VAL)
+        y_ref = GetPlotLimits(IMPLOT_AUTO,IMPLOT_AUTO).X.Max;
+    GetterXY<IndexerIdx<T>,IndexerIdx<T>> getter1(IndexerIdx<T>(xs,count,offset,stride),IndexerIdx<T>(ys,count,offset,stride),count);
+    GetterXY<IndexerConst,IndexerIdx<T>>  getter2(IndexerConst(y_ref),IndexerIdx<T>(ys,count,offset,stride),count);
+    PlotShadedEx(label_id, getter1, getter2, flags);
+    }
+    else {
     if (y_ref == -HUGE_VAL)
         y_ref = GetPlotLimits(IMPLOT_AUTO,IMPLOT_AUTO).Y.Min;
     if (y_ref == HUGE_VAL)
@@ -1774,6 +1785,7 @@ void PlotShaded(const char* label_id, const T* xs, const T* ys, int count, doubl
     GetterXY<IndexerIdx<T>,IndexerIdx<T>> getter1(IndexerIdx<T>(xs,count,offset,stride),IndexerIdx<T>(ys,count,offset,stride),count);
     GetterXY<IndexerIdx<T>,IndexerConst>  getter2(IndexerIdx<T>(xs,count,offset,stride),IndexerConst(y_ref),count);
     PlotShadedEx(label_id, getter1, getter2, flags);
+    }
 }
 
 

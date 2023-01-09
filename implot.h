@@ -251,7 +251,8 @@ enum ImPlotStairsFlags_ {
 
 // Flags for PlotShaded (placeholder)
 enum ImPlotShadedFlags_ {
-    ImPlotShadedFlags_None  = 0 // default
+    ImPlotShadedFlags_None  = 0, // default
+    ImPlotShadedFlags_Vertical = 1 << 10, // Self-implemented, help plot shaded line on the y-axis
 };
 
 // Flags for PlotBars
