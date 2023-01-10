@@ -28,39 +28,30 @@ float RandomRange(float min, float max) {
     float scale = rand() / (float)RAND_MAX;
     return min + scale * (max - min);
 }
-void DrawBasicTable(char* label, char* contents[], int row, int col) {
+void TextCentered(char* text) {
+    auto windowWidth = ImGui::GetColumnWidth();
+    auto textWidth = ImGui::CalcTextSize(text).x;
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (windowWidth - textWidth) * 0.5f);
+    ImGui::Text(text);
+}
+void DrawBasicTable(char* label, char* contents[], ImVec4 colors[], int row, int col) {
     if (ImGui::BeginTable(label, col)) {
 
     for (int i = 0; i < row; i++) {
         ImGui::TableNextRow();
         for (int j = 0; j < col; j++) {
             ImGui::TableSetColumnIndex(j);
-            ImGui::Text(contents[i * col + j]);
+                ImGui::PushItemWidth(-FLT_MIN);
+                ImGui::PushStyleColor(ImGuiCol_Text, colors[i]);
+                TextCentered(contents[i * col + j]);
+                ImGui::PopStyleColor();
+                ImGui::PopItemWidth();
         }
     }
     ImGui::EndTable();
     }
 };
-//void TextCentered(std::string text) {
-//    float win_width = ImGui::GetWindowSize().x;
-//    float text_width = ImGui::CalcTextSize(text.c_str()).x;
-//
-//    // calculate the indentation that centers the text on one line, relative
-//    // to window left, regardless of the `ImGuiStyleVar_WindowPadding` value
-//    float text_indentation = (win_width - text_width) * 0.5f;
-//
-//    // if text is too long to be drawn on one line, `text_indentation` can
-//    // become too small or even negative, so we check a minimum indentation
-//    float min_indentation = 20.0f;
-//    if (text_indentation <= min_indentation) {
-//        text_indentation = min_indentation;
-//    }
-//
-//    ImGui::SameLine(text_indentation);
-//    ImGui::PushTextWrapPos(win_width - text_indentation);
-//    ImGui::TextWrapped(text.c_str());
-//    ImGui::PopTextWrapPos();
-//}
 
 int main(int, char**)
 {
