@@ -122,18 +122,79 @@ int main(int, char**)
     bool show_implot_demo_window = false;
     bool my_form = false;
     bool my_table = true;
-    const int rand_data_count = 100;
+    const int rand_data_count = 200;
     ImVec4 clear_color = ImVec4(0.25f, 0.35f, 0.00f, 1.00f);
 
+    // Fake datas
     static double x[rand_data_count];
     static double y[rand_data_count];
-    for (int j = 0; j <= rand_data_count; j++) {
-        x[j] = RandomRange(-1, 1);
-        if (j > 0)
-            y[j] = y[j - 1] + RandomRange(0, 1);
-        else
+    for (int j = 0; j < rand_data_count; j++) {
+        if (j > 0) {
+
+            x[j] = x[j - 1] + RandomRange(-10, 10);
+            y[j] = y[j - 1] + 1;
+        }
+        else {
+            x[j] = RandomRange(70, 80);
             y[j] = 1;
     }
+    }
+    static double x1[rand_data_count];
+    static double y1[rand_data_count];
+    for (int j = 0; j < rand_data_count; j++) {
+        if (j > 0) {
+            x1[j] = x1[j - 1] + RandomRange(-1, 1);
+            y1[j] = y1[j - 1] + 1;
+        }
+        else {
+            x1[j] = 50;
+            y1[j] = 1;
+        }
+
+    }
+    static double resist_y[rand_data_count];
+    static double resist_resdeep[rand_data_count];
+    static double resist_resmed[rand_data_count];
+    for (int j = 0; j < rand_data_count; j++) {
+        if (j > 0) {
+            resist_resdeep[j] = resist_resdeep[j - 1] + RandomRange(-100, 100);
+            resist_resmed[j] = resist_resdeep[j] + RandomRange(-100, 100);
+            resist_y[j] = resist_y[j - 1] + 1;
+        }
+        else {
+            resist_resdeep[j] = RandomRange(2, 2000);
+            resist_resmed[j] = resist_resdeep[j] + RandomRange(-100, 100);
+            resist_y[j] = 1;
+        }
+
+    }
+
+    static double neutron_y[rand_data_count];
+    static double neutron_nphi[rand_data_count];
+    static double neutron_rhob[rand_data_count];
+    static double neutron_pe[rand_data_count];
+
+    for (int j = 0; j < rand_data_count; j++) {
+        if (j > 0) {
+            neutron_pe[j] = neutron_pe[j-1] + RandomRange(-1, 1);
+            neutron_nphi[j] = neutron_pe[j] + RandomRange(-5, 5);
+            neutron_rhob[j] = neutron_pe[j] + RandomRange(1.95, 2.95);
+            neutron_y[j] = neutron_y[j - 1] + 1;
+        }
+        else {
+            neutron_pe[j] = 5;
+            neutron_nphi[j] = neutron_pe[j] + RandomRange(-5, 5);
+            neutron_rhob[j] = neutron_pe[j] + RandomRange(1.95, 2.95);
+            neutron_y[j] = 1;
+        }
+    }
+
+
+    // Predefined Colors
+    ImVec4 color_green = ImVec4(0.0, 0.8, 0.0, 1.0);
+    ImVec4 color_red = ImVec4(0.8, 0.0, 0.0, 1.0);
+    ImVec4 color_blue = ImVec4(0.0, 0.6, 1.0, 1.0);
+    ImVec4 color_black = ImVec4(0.0, 0.0, 0.0, 1.0);
     // Main loop
     bool done = false;
     while (!done)
